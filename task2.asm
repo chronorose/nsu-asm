@@ -14,10 +14,10 @@
   .end_macro 
   
   .macro newline
-  	mv s0, a0
+  	mv t0, a0
   	li a0, 10
   	printch
-  	mv a0, s0
+  	mv a0, t0
   .end_macro
   
   .macro println
@@ -34,6 +34,7 @@ main:
 	readch
 	li t0, '\n'
 	beq t0, a0, exit
+	println
 	addi a0, a0, 1
 	println
 	j main

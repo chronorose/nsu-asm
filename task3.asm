@@ -16,12 +16,23 @@
 	mv a0, t0
 .end_macro
 
+.macro error %s
+.data
+str: .asciz %s
+.text
+	newline
+	la a0, str
+	syscall 4
+	exit 1
+.end_macro
+
 .macro println
 	newline
 	printch
 .end_macro
 
-.macro exit
+.macro exit %n
+	li a0, %n
 	syscall 93
 .end_macro
 
@@ -32,11 +43,13 @@
 main:
 	li a0, 0
 	call readnum
-	mv s4, a0
+	mv s0, a0
 	call readnum
-	mv s5, a0
+	mv s1, a0
 	readch
 	li t0, '+'
+	mv a1, s0
+	mv a2, s1
 	beq a0, t0, add
 	li t0, '-'
 	beq a0, t0, sub
@@ -44,45 +57,58 @@ main:
 	beq a0, t0, and
 	li t0, '|'
 	beq a0, t0, or
-	j exit
+	error "Wrong operator"
 
 add:
-	add a0, s4, s5
+	add a0, a1, a2
 	call printnums
+	j exit
 sub:
-	sub a0, s4, s5
+	sub a0, a1, a2
 	call printnums
+	j exit
 and:
-	and a0, s4, s5
+	and a0, a1, a2
 	call printnums
+	j exit
 or:
-	or a0, s4, s5
+	or a0, a1, a2
 	call printnums
+	j exit
 	
 printnums:
-	mv s0, a0
-	mv s1, sp
+	addi sp, sp, -12
+	sw s0, 0(sp)
+	sw s1, 4(sp)
+	sw s2, 8(sp)
+	mv s2, a0
+	mv s0, sp
 
 printprepare:
-	andi a0, s0, 0xF
+	andi a0, s2, 0xF
+	mv s1, ra
 	call to_number
-	addi sp, sp, -1
-	sb, a0, 0(sp)
-	srli s0, s0, 4
-	bgtz s0, printprepare
+	mv ra, s1
+	addi sp, sp, -4
+	sw, a0, 0(sp)
+	srli s2, s2, 4
+	bgtz s2, printprepare
 printLoop:
-	lb a0, 0(sp)
+	lw a0, 0(sp)
 	printch
-	addi sp, sp, 1
-	bne sp, s1, printLoop
-	j exit
+	addi sp, sp, 4
+	bne s0, sp, printLoop
+	lw s0, 0(sp)
+	lw s1, 4(sp)
+	lw s2, 8(sp)
+	addi sp, sp, 12
+	ret
 	
 	
 
 to_number:
 	slti t0, a0, 10
-	li t1, 0
-	beq t0, t1, to_hex
+	beqz t0, to_hex
 	addi a0, a0, 48
 	ret
 
@@ -91,36 +117,47 @@ to_hex:
 	ret
 		
 exit:
-	exit
+	exit 0
 	
 readnum:
 	li t0, '\n'
-	li s1, 0	
+	addi sp, sp, -8
+	sw s0, 0(sp)
+	sw s1, 4(sp)
+	li s0, 0	
 readnumber:
 	readch
 	li t0, '\n'
 	beq a0, t0, readnumber_return
-	mv s3, ra
+	mv s1, ra
 	call parsenum
-	mv ra, s3
-	slli, s1, s1, 4
-	add s1, s1, a0
+	mv ra, s1
+	slli, s0, s0, 4
+	add s0, s0, a0
 	j readnumber
 
 readnumber_return:
-	mv a0, s1
+	mv a0, s0
+	lw s0, 0(sp)
+	lw s1, 4(sp)
+	addi sp, sp, 8
 	ret
 
 parsenum:
-	andi t0, a0, 0xFF
-	addi t0, t0, -48
+	xori t0, a0, 0x30
+	#andi t0, a0, 0xFF
+	#addi t0, t0, -48
 	slti t0, t0, 10
-	li t1, 1
-	beq t0, t1, decimal
-	addi t0, a0, -65
-	slti t0, t0, 6
-	beq t0, t1, hex
-	j exit
+	bnez t0, decimal
+	andi t0, a0, 0xFF
+	addi t0, t0, -65
+	sltiu t0, t0, 6
+	bnez t0, hex
+	andi t0, a0, 0xFF
+	addi t0, t0, -97
+	sltiu t0, t0, 6
+	bnez t0, hexsmall
+	error "Wrong input"
 	
 decimal:
 	addi a0, a0, -48
@@ -128,4 +165,7 @@ decimal:
 
 hex:
 	addi a0, a0, -55
+	ret
+hexsmall:
+	addi a0, a0, -87
 	ret

@@ -75,7 +75,8 @@ or:
 	or a0, a1, a2
 	call printnums
 	j exit
-	
+
+# void printnums(int a0);
 printnums:
 	addi sp, sp, -12
 	sw s0, 0(sp)
@@ -118,7 +119,8 @@ to_hex:
 		
 exit:
 	exit 0
-	
+
+# int readnum();
 readnum:
 	li t0, '\n'
 	addi sp, sp, -8
@@ -143,14 +145,13 @@ readnumber_return:
 	addi sp, sp, 8
 	ret
 
+# int parsenum(int a0);
 parsenum:
 	xori t0, a0, 0x30
-	#andi t0, a0, 0xFF
-	#addi t0, t0, -48
 	slti t0, t0, 10
 	bnez t0, decimal
-	andi t0, a0, 0xFF
-	addi t0, t0, -65
+	xori t0, a0, 0x40
+	addi t0, t0, -1
 	sltiu t0, t0, 6
 	bnez t0, hex
 	andi t0, a0, 0xFF

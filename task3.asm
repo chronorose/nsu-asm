@@ -81,19 +81,17 @@ printnums:
 	addi sp, sp, -12
 	sw s0, 0(sp)
 	sw s1, 4(sp)
-	sw s2, 8(sp)
-	mv s2, a0
+	sw ra, 8(sp)
+	mv s1, a0
 	mv s0, sp
 
 printprepare:
-	andi a0, s2, 0xF
-	mv s1, ra
+	andi a0, s1, 0xF
 	call to_number
-	mv ra, s1
 	addi sp, sp, -4
 	sw, a0, 0(sp)
-	srli s2, s2, 4
-	bgtz s2, printprepare
+	srli s1, s1, 4
+	bgtz s1, printprepare
 printLoop:
 	lw a0, 0(sp)
 	printch
@@ -101,7 +99,7 @@ printLoop:
 	bne s0, sp, printLoop
 	lw s0, 0(sp)
 	lw s1, 4(sp)
-	lw s2, 8(sp)
+	lw ra, 8(sp)
 	addi sp, sp, 12
 	ret
 	
@@ -125,15 +123,13 @@ readnum:
 	li t0, '\n'
 	addi sp, sp, -8
 	sw s0, 0(sp)
-	sw s1, 4(sp)
+	sw ra, 4(sp)
 	li s0, 0	
 readnumber:
 	readch
 	li t0, '\n'
 	beq a0, t0, readnumber_return
-	mv s1, ra
 	call parsenum
-	mv ra, s1
 	slli, s0, s0, 4
 	add s0, s0, a0
 	j readnumber
@@ -141,7 +137,7 @@ readnumber:
 readnumber_return:
 	mv a0, s0
 	lw s0, 0(sp)
-	lw s1, 4(sp)
+	lw ra, 4(sp)
 	addi sp, sp, 8
 	ret
 

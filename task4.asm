@@ -30,10 +30,10 @@ str: .asciz %s
 .end_macro
 
 .macro newline
-	mv t0, a0
+	push a0
 	li a0, 10
 	printch
-	mv a0, t0
+	pop a0
 .end_macro
 
 .macro println
@@ -41,7 +41,8 @@ str: .asciz %s
 	printch
 .end_macro
 
-.macro exit
+.macro exit %n
+	li a0, %n
 	syscall 93
 .end_macro
 
@@ -51,28 +52,130 @@ str: .asciz %s
 
 main:
 	call read_num_prologue
+	call write_bcd
+	#mv s0, a0
+	#call read_num_prologue
+	# call dbg
+	#mv a1, a0
+	#mv a0, s0
+	exit 0
+
+operation_prologue:
+	#push s0
+	#push s1
+	#mv s0, a0 # first number
+	#mv s1, a1 # second number
+	call addition
+	ret
+# TODO: ACTUALLY DO ADDITION AND SUBTRACTION
+addition:
+	push s0
+	push s1
+	push ra
+	mv s0, a0
+	mv s1, a1
+	andi a0, s0, 0xF
+	srli s0, s0, 4
+	andi a1, s1, 0xF
+	srli s1, s1, 4
+	slt a2, s0, s1
+	call addition_sign
+	add s0, s0, s1
+correct:
 	
-# pair<int, int> read_num();
+	# li t0, 0xF
+	# slli t0, t0, 28
+	# andi t0, t0, s0
+	# bnez t0, addition_overflow
+
+#int addition_sign(int, int, int)
+addition_sign:
+	beqz a2, add_first_sign
+add_second_sign:
+	mv a0, a1
+add_first_sign:
+	ret
+
+# void write_bcd(int arg);
+write_bcd:
+	newline
+	push s0
+	push s1
+	mv s0, a0
+	srli s0, s0, 4
+	andi s1, a0, 0xF
+	addi a0, s1, -0xB
+	li s1, 0
+	beqz a0, bcd_write_minus
+write_bcd_prep_loop:
+	andi a0, s0, 0xF
+	push a0
+	srli s0, s0, 4
+	addi s1, s1, 1
+	bnez s0, write_bcd_prep_loop
+write_bcd_body:
+	pop a0
+	addi a0, a0, 48
+	printch
+	addi s1, s1, -1
+	bnez s1, write_bcd_body
+write_bcd_epilogue:
+	pop s1
+	pop s0
+	ret
+	
+
+bcd_write_minus:
+	li a0, '-'
+	printch
+	j write_bcd_prep_loop
+	
+# int read_num();
 read_num_prologue:
 	push ra
 	push s0
 	push s1
 	push s2
+	push s3
 	call parse_sign	
-	andi s0, a0, 0xF
-	srli s2, a0, 4
-	mv s1, a1
-	li t0, '\n'
+	andi s0, a0, 0xF # s0 - sign
+	srli s2, a0, 4 # s2 - total number
+	mv s1, a1 # s1 - loop number
+	li s3, '\n'
 read_num_main:
 	readch
-	beq t0, a0, read_num_epilogue
+	beq s3, a0, read_num_epilogue
 	call parse_num
 	slli s2, s2, 4
 	add s2, s2, a0
 	addi s1, s1, -1
 	bnez s1, read_num_main
 read_num_epilogue:
-	
+	slli a0, s2, 4
+	add a0, a0, s0
+	pop s3
+	pop s2
+	pop s1
+	pop s0
+	pop ra
+	ret
+
+dbg:
+	li t0, 8
+	push s0
+	mv s0, a0
+	newline
+dbg_body:
+	andi t1, s0, 0xF
+	srli, s0, s0, 4
+	mv a0, t1
+	addi a0, a0, 48
+	printch
+	addi t0, t0, -1
+	bnez t0, dbg_body
+dbg_epilogue:
+	pop s0
+	ret
 	
 # pair<int, int> parse_sign();
 # check for sign at the start of input.
@@ -85,7 +188,9 @@ parse_sign:
 	li t0, '+'
 	beq t0, a0, parse_sign_plus 
 	push ra
+	push a1
 	call parse_num
+	pop a1
 	pop ra
 	slli a0, a0, 4
 	addi a0, a0, 0xA
@@ -108,5 +213,5 @@ parse_num:
 	bnez t0, parse_num_epilogue
 	error "wrong input"
 parse_num_epilogue:
-	mv a0, t0
+	addi a0, a0, -48
 	ret	

@@ -180,6 +180,7 @@ read_num_prologue:
 	push s1
 	push s2
 	push s3
+	newline
 	call parse_sign	
 	andi s0, a0, 0xF # s0 - sign
 	srli s2, a0, 4 # s2 - total number

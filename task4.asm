@@ -52,12 +52,14 @@ str: .asciz %s
 
 main:
 	call read_num_prologue
-	call write_bcd
-	#mv s0, a0
-	#call read_num_prologue
+	#call write_bcd
+	mv s0, a0
+	call read_num_prologue
 	# call dbg
-	#mv a1, a0
-	#mv a0, s0
+	mv a1, a0
+	mv a0, s0
+	call addition
+	call write_bcd
 	exit 0
 
 operation_prologue:
@@ -67,26 +69,67 @@ operation_prologue:
 	#mv s1, a1 # second number
 	call addition
 	ret
-# TODO: ACTUALLY DO ADDITION AND SUBTRACTION
+
 addition:
 	push s0
 	push s1
+	push s2
 	push ra
 	mv s0, a0
 	mv s1, a1
+	mv s3, zero
 	andi a0, s0, 0xF
 	srli s0, s0, 4
 	andi a1, s1, 0xF
 	srli s1, s1, 4
 	slt a2, s0, s1
 	call addition_sign
+	mv s2, a0 # sign
 	add s0, s0, s1
-correct:
-	
+	mv s1, zero
+	mv t4, s0
+	li t0, 7
+correct_prep:
+	andi t1, t4, 0xF
+	srli t4, t4, 4
+	addi t1, t1, -9
+	blez t1, correct_continue2
+correction:
+	li t2, 0x6
+	li t3, 7
+	sub t3, t3, t0
+	beqz t3, correct_continue
+sdvig:
+	slli t2, t2, 4
+	addi t3, t3, -1
+	bnez t3, sdvig
+correct_continue:
+	add s1, s1, t2
+correct_continue2:
+	addi t0, t0, -1
+	bnez t0, correct_prep
+# s1 - correction. s0 - result. s2 sign
+addition_continue:
+	add s0, s0, s1
+	li t0, 0xF
+	slli, t0, t0, 28
+	and t0, t0, s0
+	bnez t0, overflow
+	slli, s0, s0, 4
+	add s0, s0, s2
+	mv a0, s0
+	pop ra
+	pop s2
+	pop s1
+	pop s0
+	ret
 	# li t0, 0xF
 	# slli t0, t0, 28
 	# andi t0, t0, s0
 	# bnez t0, addition_overflow
+
+overflow:
+	error "Overflow detected"
 
 #int addition_sign(int, int, int)
 addition_sign:

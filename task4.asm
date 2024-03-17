@@ -58,36 +58,114 @@ main:
 	# call dbg
 	mv a1, a0
 	mv a0, s0
-	call addition
+	call operation_prologue
 	call write_bcd
 	exit 0
 
 operation_prologue:
-	#push s0
-	#push s1
-	#mv s0, a0 # first number
-	#mv s1, a1 # second number
-	call addition
-	ret
-
-addition:
 	push s0
 	push s1
 	push s2
 	push ra
-	mv s0, a0
-	mv s1, a1
-	mv s3, zero
-	andi a0, s0, 0xF
+	mv s0, a0 # first number
+	mv s1, a1 # second number
+	call get_sign
+	andi a1, s0, 0xF
+	andi a2, s1, 0xF
 	srli s0, s0, 4
-	andi a1, s1, 0xF
 	srli s1, s1, 4
-	slt a2, s0, s1
-	call addition_sign
-	mv s2, a0 # sign
-	add s0, s0, s1
-	mv s1, zero
-	mv t4, s0
+	slt a4, s0, s1
+	call get_op
+	beqz a3, operation
+	mv s2, s0  # TODO: redo swap with xors
+	mv s0, s1
+	mv s1, s2
+operation:
+	mv s2, a1 # sign in the end
+	mv t0, a0
+	mv a0, s0
+	mv a1, s1
+	beqz t0, addition_branch
+	call subtraction
+	addi a0, a0, 0xA
+	add a0, a0, s2
+operation_epilogue:
+	pop ra
+	pop s2
+	pop s1
+	pop s0
+	ret
+	
+addition_branch:
+	call addition
+	j operation_epilogue
+
+get_op:
+	li a3, 0
+	beqz a0, plus_branch
+minus_branch:
+	xor t0, a1, a2
+	beqz t0, minus_equal
+minus_diff:
+	xori t0, a1, 0xA
+	li a0, 0
+	li a1, 0
+	beqz t0, get_op_epilogue
+	li a0, 1
+	li a1, 1
+	bnez t0, get_op_epilogue
+minus_equal:
+	xori t0, a1, 0xA
+	beqz t0, dep
+	li a3, 1
+	bnez t0, dep
+plus_branch:
+	xor t0, a1, a2
+	beqz t0, plus_equal
+plus_diff:
+	xori t0, a1, 0xA
+	beqz t0, dep
+	li a3, 1
+	bnez t0, dep
+plus_equal:
+	xori t0, a1, 0xA
+	li a0, 0
+	li a1, 0
+	beqz t0, get_op_epilogue
+	li a0, 0
+	li a1, 1
+	bnez t0, get_op_epilogue
+dep:
+	li a0, 1
+	mv a1, a4 
+	beqz a3, get_op_epilogue
+	beqz a1, swap2
+swap1:
+	li a1, 0
+swap2:
+	li a1, 1
+	bnez a3, get_op_epilogue
+get_op_epilogue:
+	ret
+
+get_sign:
+	readch
+	xori t1, a0, 0x2B # check for +
+	beqz t1, ret_plus 
+	xori t2, a0, 0x2D # check for -
+	beqz t2, ret_minus
+	error "Wrong operator"
+ret_plus:
+	li a0, 0
+	ret
+ret_minus:
+	li a0, 1
+	ret
+
+addition:
+	add a0, a0, a1
+	mv a1, zero
+	mv t4, a0
 	li t0, 7
 correct_prep:
 	andi t1, t4, 0xF
@@ -104,39 +182,72 @@ sdvig:
 	addi t3, t3, -1
 	bnez t3, sdvig
 correct_continue:
-	add s1, s1, t2
+	add a1, a1, t2
 correct_continue2:
 	addi t0, t0, -1
 	bnez t0, correct_prep
 # s1 - correction. s0 - result. s2 sign
 addition_continue:
-	add s0, s0, s1
+	add a0, a0, a1
 	li t0, 0xF
 	slli, t0, t0, 28
-	and t0, t0, s0
+	and t0, t0, a0
 	bnez t0, overflow
-	slli, s0, s0, 4
-	add s0, s0, s2
-	mv a0, s0
-	pop ra
-	pop s2
-	pop s1
-	pop s0
+	slli, a0, a0, 4
 	ret
-	# li t0, 0xF
-	# slli t0, t0, 28
-	# andi t0, t0, s0
-	# bnez t0, addition_overflow
 
 overflow:
 	error "Overflow detected"
 
-#int addition_sign(int, int, int)
-addition_sign:
-	beqz a2, add_first_sign
-add_second_sign:
-	mv a0, a1
-add_first_sign:
+#int subtraction(int, int)	
+subtraction:
+	push s0
+	push s1
+	li s0, 0
+	li s1, 0
+	li a4, 0
+	li t2, 7
+subtraction_main:
+	andi t0, a0, 0xF
+	andi t1, a1, 0xF
+	slt t4, t0, t1
+	beqz t4, subtraction_main_cont
+	li a3, 0
+	li t5, 0xF
+subtraction_take:
+	slli t5, t5, 4
+	addi a3, a3, 1
+	and t6, t5, a0
+	beqz t6, subtraction_take
+	li t5, 4
+	mul a4, a3, t5
+	addi a3, a3, 7
+	sub a3, a3, t2
+	mul a3, a3, t5
+	li t5, 0x1
+	sll t5, t5, a4
+	sub a0, a0, t5
+	li t5, 0x6
+	sll t5, t5, a3
+	add s0, s0, t5
+	addi t0, t0, 10
+subtraction_main_cont:
+	sub t0, t0, t1
+	li t1, 7
+	sub t1, t1, t2
+	li a3, 4
+	mul t1, t1, a3
+	sll t0, t0, t1
+	add s1, s1, t0
+	addi t2, t2, -1
+	srli a0, a0, 4
+	srli a1, a1, 4
+	bnez t2, subtraction_main
+subtraction_epilogue:
+	sub a0, s1, s0
+	slli a0, a0, 4
+	pop s1
+	pop s0
 	ret
 
 # void write_bcd(int arg);

@@ -45,7 +45,7 @@ print_dec:
 	push s1
 	li s0, 0
 	mv s1, a0
-	bgtz a0, print_dec_prep
+	bgez a0, print_dec_prep
 	li a0, '-'
 	printch
 	neg s1, s1

@@ -7,7 +7,7 @@ main:
 	call read_dec
 	mv s0, a0
 	call read_dec
-	mv s1, a1
+	mv s1, a0
 	call parse_sign_op
 	mv a3, a0
 	mv a0, s0
@@ -25,14 +25,16 @@ operation:
 	ret
 
 op_plus:
-	mv t1, a0
-	li a0, 'H'
-	printch
-	mv a0, t1
 	li t0, MAX_INT
 	sub t0, t0, a0
 	bgt a1, t0, overflow
 	add a0, a0, a1
+	mv s0, a0
+	push ra
+	mv a0, a1
+	call print_dec
+	pop ra
+	mv a0, s0
 	ret
 	
 overflow:

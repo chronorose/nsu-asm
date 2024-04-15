@@ -1,5 +1,4 @@
 j main
-.include "macro.asm"
 .include "divmod.asm"
 .include "hex_io.asm"
 

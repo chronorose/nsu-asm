@@ -36,6 +36,7 @@ parse_sign:
 	pop ra
 	ret
 sign_minus:
+	li a0, 0
 	li a1, 1
 	ret
 
@@ -46,9 +47,9 @@ print_dec:
 	li s0, 0
 	mv s1, a0
 	bgez a0, print_dec_prep
+	neg s1, s1
 	li a0, '-'
 	printch
-	neg s1, s1
 	mv a0, s1
 print_dec_prep:
 	call mod10

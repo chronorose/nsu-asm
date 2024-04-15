@@ -37,7 +37,7 @@ div10_rec:
 	bltz t0, div10_rec_base
 	srli s0, a0, 3
 	srli a0, a0, 2
-	call div10
+	call div10_rec
 	sub a0, s0, a0
 	pop s0
 	pop ra

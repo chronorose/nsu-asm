@@ -8,6 +8,14 @@
 	xor %r2, %r1, %r2
 	xor %r1, %r1, %r2
 .end_macro
+
+.macro printStr
+	syscall 4
+.end_macro
+
+.macro printInt
+	syscall 1
+.end_macro
 	
 .macro readch
 	syscall 12
@@ -16,6 +24,17 @@
 .macro push %register
 	addi sp, sp, -4
 	sw %register, 0(sp)
+.end_macro
+
+.macro println %string
+.data 
+str: .asciz %string
+.text
+	newline
+	push a0
+	la a0, str
+	syscall 4
+	pop a0
 .end_macro
 
 .macro pop %register

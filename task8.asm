@@ -28,6 +28,7 @@ op_plus:
 	li t0, MAX_INT
 	sub t0, t0, a0
 	bgt a1, t0, overflow
+	li t0, MIN_INT
 	add a0, a0, a1
 	mv s0, a0
 	push ra

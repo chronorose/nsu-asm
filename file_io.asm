@@ -11,7 +11,7 @@
 	mv a0, t6
 .end_macro
 
-fopen:
+fopen: # int fopen(const char* path)
 	li a1, 0
 	open
 	li t0, -1
@@ -26,7 +26,7 @@ fopen_error:
 	beq t0, a0, lseek_error
 .end_macro
 
-flen:
+flen: # int flen(int fd)
 	push s0
 	mv s0, a0
 	li a1, 0
@@ -40,6 +40,30 @@ flen:
 	pop s0
 	ret
 
+fload: # char* fload(int fd)
+	push ra
+	push s0
+	push s1
+	mv s0, a0
+	call flen
+	mv s1, a0
+	addi, a0, a0, 1
+	syscall 9
+	mv a1, a0
+	mv a0, s0
+	mv s0, a1
+	mv a2, s1
+	syscall 63
+	li t0, -1
+	beq t0, a0, fload_error
+	mv a0, s0
+	pop s1
+	pop s0
+	pop ra
+	ret
+
 lseek_error:
 	error "error happened during lseek"
 
+fload_error:
+	error "error happened during reading of the file"

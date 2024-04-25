@@ -9,8 +9,11 @@ main:
 	lw a0, 0(a1)
 	printStr
 	call fopen
-	mv s0, a0
+	mv s0, a0 # file descriptor
+	call fload
+	mv a0, s0
 	call flen
+	mv s2, a0
 	println "size of the file: "
 	printInt
 	close s0

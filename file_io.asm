@@ -48,12 +48,12 @@ fload: # char* fload(int fd)
 	call flen
 	mv s1, a0
 	addi, a0, a0, 1
-	syscall 9
+	syscall 9 # sbrk
 	mv a1, a0
 	mv a0, s0
 	mv s0, a1
 	mv a2, s1
-	syscall 63
+	syscall 63 # read
 	li t0, -1
 	beq t0, a0, fload_error
 	mv a0, s0

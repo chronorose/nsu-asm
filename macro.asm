@@ -13,10 +13,34 @@
 	syscall 4
 .end_macro
 
+.macro print_label %arg
+	mv t6, a0
+	la a0, %arg
+	syscall 4
+	mv a0, t6
+.end_macro
+
+.macro print_str %arg
+.data
+arg: .asciz %arg
+.text
+	mv t6, a0
+	la a0, arg
+	syscall 4
+	mv a0, t6
+.end_macro
+
 .macro printInt
 	syscall 1
 .end_macro
-	
+
+.macro print_int %int
+	mv t6, a0
+	li a0, %int
+	syscall 1
+	mv a0, t6
+.end_macro
+
 .macro readch
 	syscall 12
 .end_macro
@@ -31,10 +55,10 @@
 str: .asciz %string
 .text
 	newline
-	push a0
+	mv t6, a0
 	la a0, str
 	syscall 4
-	pop a0
+	mv a0, t6
 .end_macro
 
 .macro pop %register
@@ -53,10 +77,10 @@ str: .asciz %s
 .end_macro
 
 .macro newline
-	push a0
+	mv t6, a0
 	li a0, 10
 	printch
-	pop a0
+	mv a0, t6
 .end_macro
 
 .macro println
@@ -67,6 +91,13 @@ str: .asciz %s
 .macro exit %n
 	li a0, %n
 	syscall 93
+.end_macro
+
+.macro print_char %char
+	mv t6, a0
+	li a0, %char
+	syscall 11
+	mv a0, t6
 .end_macro
 
 .macro printch

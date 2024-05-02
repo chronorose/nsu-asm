@@ -59,3 +59,25 @@ mod10:
 	pop s0
 	pop ra
 	ret
+
+isqrt: # int isqrt(int value)
+	li t0, 30
+	li t1, 0
+isqrt_loop:
+	bltz t0, isqrt_end
+	li t2, 0xFF
+	sll t2, t2, t0
+	and t3, a0, t2
+	slli t1, t1, 1
+	slli t4, t1, 1
+	addi t4, t4, 1
+	sll t4, t4, t0
+	bgt t4, t3, isqrt_loop_cont
+	addi t1, t1, 1
+	sub a0, a0, t4
+isqrt_loop_cont:
+	addi t0, t0, -2
+	j isqrt_loop
+isqrt_end:
+	mv a0, t1
+	ret

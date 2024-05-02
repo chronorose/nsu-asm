@@ -160,3 +160,45 @@ ss_lc_second:
 	addi t1, t1, 32
 ss_lc_end:
 	j strstr_lc_loop_cont
+	
+strspn: # int strspn(const char* str1, const char str2)
+	li t2, 0
+	mv t3, a1
+strspn_loop:
+	lb t0, 0(a0)
+	beqz t0, strspn_end
+strspn_loop_cont:
+	lb t1, 0(a1)
+	beqz t1, strspn_end
+	beq t0, t1, strspn_found
+	addi a1, a1, 1
+	j strspn_loop_cont
+strspn_found:
+	addi a0, a0, 1
+	addi t2, t2, 1
+	mv a1, t3
+	j strspn_loop
+strspn_end:
+	mv a0, t2
+	ret
+
+strcspn: # int strspn(const char* str1, const char str2)
+	li t2, 0
+	mv t3, a1
+strcspn_loop:
+	lb t0, 0(a0)
+	beqz t0, strcspn_end
+strcspn_loop_cont:
+	lb t1, 0(a1)
+	beqz t1, strcspn_end
+	beq t0, t1, strcspn_found
+	addi a1, a1, 1
+	j strcspn_loop_cont
+strcspn_found:
+	addi a0, a0, 1
+	addi t2, t2, 1
+	mv a1, t3
+	j strcspn_loop
+strcspn_end:
+	mv a0, t2
+	ret

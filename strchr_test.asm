@@ -1,7 +1,7 @@
 j actual_testing
-.include "str_lib.asm"
 .include "testLib.asm"
-.eqv __TEST_FUNC "strchr"
+.include "str_lib.asm"
+.include "strchrTestLib.asm"
 actual_testing:
 FUNC strchr, "strchr"
 OK 0 "abcde" 'a'

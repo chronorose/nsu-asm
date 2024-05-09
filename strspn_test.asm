@@ -9,4 +9,9 @@ OK 1 "abcde" "a"
 OK 0 "done" "o"
 OK 0 "kek" "a'"
 DONE
+FUNC strcspn "strcspn"
+OK 0 " " " "
+OK 1 "s " " "
+OK 3 "keks" " st"
+DONE
 exit 0

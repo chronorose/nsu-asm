@@ -30,4 +30,5 @@ fn_start:
 	swap t6, a0
 	syscall 1
 	swap t6, a0
+	newline
 .end_macro

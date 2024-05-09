@@ -161,7 +161,7 @@ ss_lc_second:
 ss_lc_end:
 	j strstr_lc_loop_cont
 	
-strspn: # int strspn(const char* str1, const char str2)
+strspn: # size_t strspn(const char* str1, const char str2)
 	li t2, 0
 	mv t3, a1
 strspn_loop:
@@ -182,7 +182,7 @@ strspn_end:
 	mv a0, t2
 	ret
 
-strcspn: # int strspn(const char* str1, const char str2)
+strcspn: # size_t strspn(const char* str1, const char str2)
 	li t2, 0
 	mv t3, a1
 strcspn_loop:
@@ -190,15 +190,28 @@ strcspn_loop:
 	beqz t0, strcspn_end
 strcspn_loop_cont:
 	lb t1, 0(a1)
-	beqz t1, strcspn_end
-	beq t0, t1, strcspn_found
+	beqz t1, strcspn_nfound
+	beq t1, t0, strcspn_end
 	addi a1, a1, 1
 	j strcspn_loop_cont
-strcspn_found:
-	addi a0, a0, 1
+strcspn_nfound:
 	addi t2, t2, 1
+	addi a0, a0, 1
 	mv a1, t3
 	j strcspn_loop
 strcspn_end:
 	mv a0, t2
+	ret
+
+strlen: # size_t strlen(const char* str)
+	li t0, 0
+	beqz a0, strlen_end
+strlen_loop:
+	lb t1, 0(a0)
+	beqz t1, strlen_end
+	addi t0, t0, 1
+	addi a0, a0, 1
+	j strlen_loop
+strlen_end:
+	mv a0, t0
 	ret

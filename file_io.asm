@@ -11,6 +11,13 @@
 	mv a0, t6
 .end_macro
 
+fopen_write:
+	li a1, 1
+	open
+	li t0, -1
+	beq a0, t0, fopen_error
+	ret
+
 fopen: # int fopen(const char* path)
 	li a1, 0
 	open

@@ -24,14 +24,21 @@
 .data
 arg: .asciz %arg
 .text
-	mv t6, a0
+	push a0
 	la a0, arg
 	syscall 4
-	mv a0, t6
+	pop a0
 .end_macro
 
 .macro printInt
 	syscall 1
+.end_macro
+
+.macro print_int_reg %reg
+	swap %reg, a0
+	#li a0, %int
+	syscall 1
+	swap a0, %reg
 .end_macro
 
 .macro print_int %int
@@ -77,10 +84,10 @@ str: .asciz %s
 .end_macro
 
 .macro newline
-	mv t6, a0
+	push a0
 	li a0, 10
 	printch
-	mv a0, t6
+	pop a0
 .end_macro
 
 .macro println

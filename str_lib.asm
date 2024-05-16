@@ -215,3 +215,48 @@ strlen_loop:
 strlen_end:
 	mv a0, t0
 	ret
+
+splitv:  # char** splitv(char* buf, char ch) version of the split that also has amount of symbols in string in the next pointer to it
+	push ra
+	push s0
+	push s1
+	push s2
+	push s3
+	push s4
+	mv s0, a0
+	mv s1, a1
+	call count_char
+	mv s3, a0
+	slli a0, a0, 3
+	syscall 9
+	mv s2, a0
+	mv a0, s0
+	mv s0, s2
+	sw a0, 0(s0)
+	mv s4, a0
+	addi s4, s4, -1
+	addi s0, s0, 4
+splitv_loop:
+	mv a1, s1
+	call strchr
+	beqz a0, splitv_end
+	sb zero, 0(a0)
+	sub t0, a0, s4
+	addi t0, t0, -1
+	sw t0, 0(s0)
+	addi s0, s0, 4
+	mv s4, a0
+	addi a0, a0, 1
+	sw a0, 0(s0)
+	addi s0, s0, 4
+	j splitv_loop
+splitv_end:
+	mv a0, s2
+	mv a1, s3
+	pop s4
+	pop s3
+	pop s2
+	pop s1
+	pop s0
+	pop ra
+	ret
